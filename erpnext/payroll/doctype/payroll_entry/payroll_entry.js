@@ -138,7 +138,6 @@ frappe.ui.form.on('Payroll Entry', {
 	payroll_frequency: function (frm) {
 		frm.trigger("set_start_end_dates").then( ()=> {
 			frm.events.clear_employee_table(frm);
-			frm.events.get_employee_with_salary_slip_and_set_query(frm);
 		});
 	},
 
@@ -146,18 +145,23 @@ frappe.ui.form.on('Payroll Entry', {
 		frm.set_query('employee', 'employees', () => {
 			return {
 				filters: {
-					name: ["not in", emp_list]
+					name: ["not in", emp_list],
+					company: frm.doc.company
 				}
 			};
 		});
 	},
 
 	get_employee_with_salary_slip_and_set_query: function (frm) {
+		if (!frm.doc.company) {
+			frappe.throw(__("Please set a Company"));
+		}
 		frappe.db.get_list('Salary Slip', {
 			filters: {
 				start_date: frm.doc.start_date,
 				end_date: frm.doc.end_date,
 				docstatus: 1,
+				company: frm.doc.company
 			},
 			fields: ['employee']
 		}).then((emp) => {
@@ -171,6 +175,7 @@ frappe.ui.form.on('Payroll Entry', {
 
 	company: function (frm) {
 		frm.events.clear_employee_table(frm);
+		frm.events.get_employee_with_salary_slip_and_set_query(frm);
 		erpnext.accounts.dimensions.update_dimension(frm, frm.doctype);
 	},
 
@@ -348,7 +353,9 @@ let render_employee_attendance = function (frm, data) {
 
 frappe.ui.form.on('Payroll Employee Detail', {
 	employee: function(frm) {
-		frm.events.clear_employee_table(frm);
+		if (!frm.doc.company) {
+			frappe.throw(__("Please set a Company"));
+		}
 		if (!frm.doc.payroll_frequency) {
 			frappe.throw(__("Please set a Payroll Frequency"));
 		}
