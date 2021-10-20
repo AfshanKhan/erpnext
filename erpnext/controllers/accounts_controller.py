@@ -1693,7 +1693,7 @@ def update_invoice_status():
 			where dt.docstatus = 1
 				and dt.status != 'Overdue'
 				and dt.outstanding_amount > 0
-				and (dt.grand_total - dt.outstanding_amount) <
+				and (dt.grand_total + dt.rounding_adjustment - dt.outstanding_amount) <
 					(select sum(payment_amount) from `tabPayment Schedule` as ps
 						where ps.parent = dt.name and ps.due_date < %s)
 		""".format(doctype), getdate())
